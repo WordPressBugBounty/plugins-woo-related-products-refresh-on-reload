@@ -3,8 +3,8 @@ Contributors: peachpay, eboxnet
 Donate link: https://peachpay.app
 Tags: products slider, random, related products, slider, woocommerce
 Requires at least: 4.0
-Tested up to: 6.3
-Stable tag: 3.3.16
+Tested up to: 6.8.2
+Stable tag: 3.3.17
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,14 @@ You can see a [demo of the plugin here](http://woorelated.eboxnet.com).
 We recommend trying the Related Products feature that is built-in to [PeachPay](https://wordpress.org/plugins/peachpay-for-woocommerce/), an all-in-one checkout and product recommendation solution engineered to increase sales.
 
 == Changelog ==
+
+### 3.3.17 (08/08/2025)
+* Fix - Security patch for banner dismissal with proper nonce verification
+* Fix - Shortcode functionality in posts, pages, and widgets (null post context)
+* Fix - Initialize default plugin options on activation for better user experience
+* Fix - Update WooCommerce API usage to modern standards (get_attributes)
+* Tweak - Update compatibility testing with WordPress 6.8.2 and WooCommerce 10.0.4
+* Dev - Comprehensive testing and modernization of plugin codebase
 
 ### 3.3.16 (11/02/2023)
 * Fix - Security patch for shortcodes

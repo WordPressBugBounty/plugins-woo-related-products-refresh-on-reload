@@ -10,13 +10,13 @@
  * Plugin Name:       Related Products for WooCommerce
  * Plugin URI:        http://woorelated.eboxnet.com
  * Description:       Display random related products in a slider based on product category, tag, or attribute on every product page.
- * Version:           3.3.16
+ * Version:           3.3.17
  * Author:            PeachPay
  * Author URI:        https://peachpay.app/
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * WC requires at least: 3.0
- * WC tested up to: 8.2
+ * WC tested up to: 10.0.4
  * Text Domain:       woo-related-products
  * Domain Path:       /languages
  */
@@ -287,13 +287,27 @@ function wrprr_wp_taxonomy( $basedonf, $atts ) {
 	global $post;
 	$started = '';
 	$sc      = '';
-	$terms   = get_the_terms( $post->ID, $basedonf );
+	
+	// Determine the product ID to use
+	$product_id = null;
 	if ( ! empty( $atts['id'] ) ) {
-		$sc    = 'woo-related-shortcode';
-		$terms = get_the_terms( $atts['id'], $basedonf );
+		$product_id = intval( $atts['id'] );
+		$sc         = 'woo-related-shortcode';
+	} elseif ( isset( $post->ID ) ) {
+		$product_id = $post->ID;
+		$sc         = '';
 	} else {
-		$sc = '';
+		// Try to get current post ID as fallback
+		$product_id = get_the_ID();
+		$sc         = '';
 	}
+	
+	// Return early if no valid product ID found
+	if ( ! $product_id ) {
+		return false;
+	}
+	
+	$terms = get_the_terms( $product_id, $basedonf );
 	if ( ! empty( $atts['title'] ) ) {
 		$no_title = $atts['title'] . '-title';
 	} else {
@@ -349,7 +363,7 @@ function wrprr_wp_taxonomy( $basedonf, $atts ) {
 	remove_all_filters( 'posts_orderby' );
 	$args = array(
 		'post_type'      => 'product',
-		'post__not_in'   => array( $post->ID ),
+		'post__not_in'   => array( $product_id ),
 		'tax_query'      => array(//PHPCS:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 			array(
 				'taxonomy' => $basedonf,
@@ -423,7 +437,7 @@ function wrprr_wc_taxonomy() {
 	$term_ids  = array();
 	$term_idsa = array();
 	$attr      = array();
-	$getatt    = $product->get_attributes( $product->get_id() );
+	$getatt    = $product->get_attributes();
 	if ( empty( $getatt ) ) {
 		return false;
 	}
@@ -653,7 +667,7 @@ function wrprr_render_peachpay_banner() {
 				style="margin-bottom: 0.5rem;"
 			>Get PeachPay for free</a>
 			<br>
-			<a href="?wrprr_peachpay_banner_dismissed">Don't show this again</a>
+			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wc-settings&tab=products&wrprr_peachpay_banner_dismissed=1' ), 'wrprr_dismiss_banner' ) ); ?>">Don't show this again</a>
 		</div>
 	</div>
 	<?php
@@ -663,8 +677,11 @@ function wrprr_render_peachpay_banner() {
  * .
  */
 function wrprr_handle_peachpay_banner_dismissed() {
-	if ( isset( $_GET['wrprr_peachpay_banner_dismissed'] ) ) {//PHPCS:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_GET['wrprr_peachpay_banner_dismissed'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'wrprr_dismiss_banner' ) ) {
 		add_user_meta( get_current_user_id(), 'wrprr_peachpay_banner_dismissed', 'true', true );
+		// Redirect to clean URL to avoid nonce in URL
+		wp_redirect( admin_url( 'admin.php?page=wc-settings&tab=products' ) );
+		exit;
 	}
 }
 add_action( 'admin_init', 'wrprr_handle_peachpay_banner_dismissed' );
